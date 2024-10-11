@@ -3,6 +3,10 @@ name: Release
 on:
   workflow_dispatch:
 
+permissions:
+  contents : write
+  issues   : read
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -28,4 +32,4 @@ jobs:
           gh release create "$VERSION" build/libs/*.jar --title "Release $VERSION" --notes "Release notes for version $VERSION"
 
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
