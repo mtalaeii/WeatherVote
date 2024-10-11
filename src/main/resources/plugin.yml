@@ -1,0 +1,8 @@
+name: WeatherVote
+version: '1.0.0'
+main: me.mahdi.weatherVote.WeatherVote
+api-version: '1.20'
+commands:
+  voting:
+    description: Vote to change the weather
+    usage: /<command> [clear|storm|rain|day|night|yes|no]

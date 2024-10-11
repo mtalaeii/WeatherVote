@@ -1,0 +1,5 @@
+/.idea/
+/.gradle/
+/testbed/
+/build/
+gradle.properties
