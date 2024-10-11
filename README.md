@@ -1,4 +1,4 @@
-# TreasureHunts
+# WeatherVote
 
 A plugin that voting between online players and change overworld weather based on vote!
 
