@@ -29,5 +29,6 @@ This is default config you can modify time of votes
 
 - [x] Limit server online players more than 1 player for starting votes
 - [x] Change Tab completer to only show yes/no if vote in process
+- [x] Automate build and release using CI/CD
 - [ ] Add support for admin command to control/cancel in process votes
 - [ ] Add support for multiple minecraft server

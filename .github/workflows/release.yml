@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '17'
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Create Release
+        id: create_release
+        run: |
+          VERSION=$(./gradlew properties | grep '^version:' | awk '{print $2}')
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          
+          gh release create "$VERSION" build/libs/*.jar --title "Release $VERSION" --notes "Release notes for version $VERSION"
+
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
