@@ -3,3 +3,4 @@
 /testbed/
 /build/
 gradle.properties
+/.kotlin/
