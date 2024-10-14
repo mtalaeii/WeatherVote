@@ -2,19 +2,12 @@ package me.mahdi.weatherVote.helpers
 
 import me.mahdi.weatherVote.WeatherVote
 import me.mahdi.weatherVote.interfaces.Weather
-import net.md_5.bungee.api.ChatColor
-import org.bukkit.Bukkit
-import org.bukkit.boss.BarColor
-import org.bukkit.boss.BarStyle
-import org.bukkit.boss.BossBar
 import org.bukkit.entity.Player
-import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.scheduler.BukkitTask
 
-class WeatherHelper(private val plugin : WeatherVote, private var player: Player) : Weather
+class WeatherHelper(private val plugin : WeatherVote) : Weather
 {
 
-    override fun rain() {
+    override fun rain(player: Player) {
         if(!player.world.hasStorm()){
             player.world.setStorm(true)
             player.world.isThundering = false
@@ -23,7 +16,7 @@ class WeatherHelper(private val plugin : WeatherVote, private var player: Player
         }
     }
 
-    override fun clear() {
+    override fun clear(player: Player) {
         if(!player.world.isClearWeather){
             player.world.setStorm(false)
             player.world.isThundering = false
@@ -32,7 +25,7 @@ class WeatherHelper(private val plugin : WeatherVote, private var player: Player
         }
     }
 
-    override fun storm() {
+    override fun storm(player: Player) {
         if(!player.world.hasStorm() && !player.world.isThundering){
             player.world.setStorm(true)
             player.world.isThundering = true
@@ -41,21 +34,22 @@ class WeatherHelper(private val plugin : WeatherVote, private var player: Player
         }
     }
 
-    override fun day() {
+    override fun day(player: Player) {
+        if(player.world.hasStorm()) clear(player)
         player.world.time = 1000
     }
 
-    override fun night() {
+    override fun night(player: Player) {
         player.world.time = 13000
     }
 
-    override fun setWeather(weather: WeatherType) {
+    override fun setWeather(weather: WeatherType,player: Player) {
         when(weather) {
-            WeatherType.RAIN -> rain()
-            WeatherType.CLEAR -> clear()
-            WeatherType.STORM -> storm()
-            WeatherType.DAY -> day()
-            else -> night()
+            WeatherType.RAIN -> rain(player)
+            WeatherType.CLEAR -> clear(player)
+            WeatherType.STORM -> storm(player)
+            WeatherType.DAY -> day(player)
+            else -> night(player)
         }
     }
 

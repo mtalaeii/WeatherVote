@@ -13,31 +13,18 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.UUID
-import kotlin.math.min
-import java.util.logging.Level
 
-class VoteHelper(
-    private val plugin: WeatherVote,
-    private val player: Player
-) {
-    private val weatherHelper: WeatherHelper by lazy { WeatherHelper(plugin, player) }
+class VoteHelper(private val plugin: WeatherVote) {
+    private val weatherHelper: WeatherHelper by lazy { WeatherHelper(plugin) }
 
     @Volatile
     private var task: BukkitTask? = null
     private val totalVoteTime = if (plugin.config.getInt("wv.vote-time") > 0) plugin.config.getInt("wv.vote-time") else 60
     private var bossBar: BossBar = Bukkit.createBossBar("Voting Progress", BarColor.GREEN, BarStyle.SEGMENTED_20)
 
-    private var totalPlayerCount = 0
     private var playerVotedCount = 0
-
     private val playersVoted = mutableMapOf<String, Boolean>()
-
     private val playersStartVote = mutableMapOf<String, Instant>()
-
-    private fun setTotalPlayers(totalPlayers: Int) {
-        totalPlayerCount = totalPlayers
-    }
 
     fun getTask(): BukkitTask? {
         return task
@@ -55,19 +42,16 @@ class VoteHelper(
         return Pair(yesVotes, noVotes)
     }
 
-    fun startVoting(weather: WeatherType) {
-        if (!isValid()) {
-            return
-        }
+    fun startVoting(weather: WeatherType,player: Player) {
+        if (!isValid(player)) return
         var remainingTime = totalVoteTime
         val players = plugin.server.onlinePlayers
         bossBar.style = BarStyle.SEGMENTED_10
-        setTotalPlayers(players.size)
         // Add players to the Boss Bar
-        players.forEach { player ->
-            bossBar.addPlayer(player)
+        players.forEach {
+            bossBar.addPlayer(it)
         }
-
+        plugin.server.sendVotingMessage(weather,player)
         task = object : BukkitRunnable() {
             override fun run() {
                 val progress = ((remainingTime.toDouble() / totalVoteTime) * 100).toInt()
@@ -82,28 +66,31 @@ class VoteHelper(
                 remainingTime--
                 if (remainingTime < 0) {
                     this.cancel()
-                    onCloseTask(weather)
+                    onCloseTask(weather,player)
                 }
             }
         }.runTaskTimer(plugin, 0L, 20L) // 20 ticks = 1 second
+        playerVote(player,true)
 
     }
 
-    private fun onCloseTask(weather: WeatherType) {
+    private fun onCloseTask(weather: WeatherType,player: Player) {
         cleanUp()
         plugin.server.broadcastColoredMessage("&4Voting has ended !")
         val (yesVotedCount, noVotedCount) = getPlayerVoteCount()
         if (!(yesVotedCount == 0 && noVotedCount == 0) && yesVotedCount >= noVotedCount) {
             plugin.server.broadcastColoredMessage("&aSuccessful round for weather &r&1&l${weather.name.lowercase()} &r&ain overworld!")
-            weatherHelper.setWeather(weather)
+            weatherHelper.setWeather(weather,player)
             playersVoted.clear()
+            playerVotedCount = 0
             return
         }
         plugin.server.broadcastColoredMessage("&cUnsuccessful round for weather &r&4&l${weather.name.lowercase()} &r&cin overworld!")
+        playerVotedCount = 0
         playersVoted.clear()
     }
 
-    private fun isValid(): Boolean {
+    private fun isValid(player: Player): Boolean {
         if (task !== null && !task!!.isCancelled) {
             player.sendColoredMessage("&eVote is already in progress !!")
             return false
@@ -112,7 +99,7 @@ class VoteHelper(
             player.sendColoredMessage("&4You can't vote in &r&4&nnether&r&4 or &r&4&nend&r&4!!")
             return false
         }
-        else if(totalPlayerCount <= 1){
+        else if(plugin.server.onlinePlayers.size <= 1){
             player.sendColoredMessage("&4There is no enough players in the server for start voting!!")
             return false
         }
@@ -130,7 +117,6 @@ class VoteHelper(
                 return false
             }
         }
-
         playersStartVote[player.uniqueId.toString()] = Instant.now()
         return true
     }
@@ -138,7 +124,6 @@ class VoteHelper(
     fun cleanUp() {
         bossBar.removeAll()
         task?.cancel()
-        playerVotedCount = 0
     }
 
     fun playerVote(
@@ -159,8 +144,8 @@ class VoteHelper(
                 }
                 updatePlayerVote(player.uniqueId.toString(), vote)
                 player.sendColoredMessage("&2you have been voted $playerVote successfully!")
+                playerVotedCount++
             }
-            playerVotedCount++
             return true
         }
         return false

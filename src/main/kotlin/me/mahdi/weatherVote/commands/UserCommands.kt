@@ -9,8 +9,8 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 
-class UserCommands constructor(private val plugin : WeatherVote): CommandExecutor , TabCompleter{
-    private var helper: VoteHelper? = null
+class UserCommands(private val plugin : WeatherVote): CommandExecutor , TabCompleter{
+    private val helper by lazy { VoteHelper(plugin) }
     private val weathers = listOf("clear","storm","rain","day","night")
 
     override fun onCommand(
@@ -19,22 +19,23 @@ class UserCommands constructor(private val plugin : WeatherVote): CommandExecuto
         p2: String,
         p3: Array<out String?>
     ): Boolean {
-
-        if(p0 is Player) {
-            helper = helper ?: VoteHelper(plugin, p0)
-            plugin.helper = helper
-            try{
-                val weather = WeatherType.valueOf(p3[0]!!.uppercase())
-                helper!!.startVoting(weather)
-                return true
-            }catch (e : IllegalArgumentException){
-                if(p3[0] == "yes"){
-                    return helper!!.playerVote(p0,true)
-                }else if(p3[0] == "no"){
-                    return helper!!.playerVote(p0,false)
-                }else{
-                    plugin.logger.warning("Unknown key key type for weather ${p3[0]}")
-                }
+        if (p0 !is Player){
+            plugin.logger.warning("You can't create a vote in commandline!!!")
+            return false
+        }
+        plugin.helper = helper
+        try{
+            val weather = WeatherType.valueOf(p3[0]!!.uppercase())
+            helper.startVoting(weather, p0)
+            return true
+        }catch (e : IllegalArgumentException){
+            if(p3[0] == "yes"){
+                return helper.playerVote(p0,true)
+            }else if(p3[0] == "no"){
+                return helper.playerVote(p0,false)
+            }else{
+                plugin.logger.warning("Unknown key type for weather ${p3[0]}")
+                e.printStackTrace()
             }
         }
         return false
@@ -51,7 +52,7 @@ class UserCommands constructor(private val plugin : WeatherVote): CommandExecuto
             return weathers // If no arguments are provided, return all weather options
         }
         val input = p3[0]?.lowercase() ?: return null
-        val commandList = if(helper?.getTask() !== null && !helper?.getTask()!!.isCancelled) listOf("yes","no") else weathers
+        val commandList = if(helper.getTask() !== null && !helper.getTask()!!.isCancelled) listOf("yes","no") else weathers
         return commandList.filter { it.startsWith(input) }
     }
 

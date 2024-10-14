@@ -14,7 +14,7 @@ Then pick up .jar file from build/libs and put it in your server plugins directo
 ## Configuration
 ```yaml
 wv:
-  vote-time   : 20
+  vote-time : 60
 
 ```
 This is default config you can modify time of votes
@@ -30,5 +30,6 @@ This is default config you can modify time of votes
 - [x] Limit server online players more than 1 player for starting votes
 - [x] Change Tab completer to only show yes/no if vote in process
 - [x] Automate build and release using CI/CD
+- [x] Add ability for voting by click on message (yes/no)
 - [ ] Add support for admin command to control/cancel in process votes
 - [ ] Add support for multiple minecraft server
